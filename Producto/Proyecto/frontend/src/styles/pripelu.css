@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import "tailwindcss";
+
+@layer components {
+  /* 1. CONTENEDOR DE SECCIÓN (CORREGIDO) */
+  .section-container {
+    @apply py-24 px-6 relative z-10;
+  }
+
+  /* Ajuste para pantallas grandes (reemplaza el md:px-20 que daba error) */
+  @media (min-width: 768px) {
+    .section-container {
+      @apply px-20;
+    }
+  }
+
+  /* 2. TÍTULOS DE SECCIÓN */
+  .section-title-wrapper {
+    @apply text-center mb-16;
+  }
+
+  .section-title {
+    @apply text-5xl font-bold italic text-gray-800;
+  }
+
+  .section-subtitle {
+    @apply text-[#f171ab] font-bold uppercase tracking-widest text-sm mb-2;
+  }
+
+  /* 3. BOTONES */
+  .btn-primary {
+    @apply bg-[#f171ab] text-white px-10 py-5 rounded-3xl font-bold text-lg shadow-xl hover:scale-105 transition-all active:scale-95 border-none cursor-pointer;
+  }
+
+  .btn-secondary {
+    @apply bg-white border border-pink-200 text-[#f171ab] px-10 py-5 rounded-3xl font-bold text-lg shadow-sm hover:bg-pink-50 transition-all flex items-center justify-center gap-3 cursor-pointer;
+  }
+
+  .btn-nav {
+    @apply bg-[#f171ab] text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-[#d85a94] transition-all border-none cursor-pointer;
+  }
+
+  /* 4. TARJETAS */
+  .card-pripelu {
+    @apply bg-white p-10 rounded-[3rem] border border-pink-50 shadow-sm hover:shadow-2xl transition-all;
+  }
+
+  /* 5. UTILIDADES EXTRAS */
+  .glass-nav {
+    @apply bg-white/30 backdrop-blur-md sticky top-0 z-20 border-b border-pink-100;
+  }
+
+  /* 6. INPUTS (CORREGIDO) */
+  .input-pripelu {
+  @apply p-4 rounded-2xl border border-pink-100 outline-none focus:border-[#f171ab] bg-white/50 transition-all;
+}
+}

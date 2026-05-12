@@ -1,121 +1,141 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { serviciosData, equipoData } from '../data'; // Importamos los datos reales
+import React, { useState, useEffect } from 'react';
 
-// Datos de ejemplo para validar disponibilidad (RF05)
-const TIME_SLOTS = [
-  { time: '09:00', period: 'Mañana', available: true },
-  { time: '10:00', period: 'Mañana', available: false },
-  { time: '11:00', period: 'Mañana', available: true },
-  { time: '15:00', period: 'Tarde', available: true },
-  { time: '16:00', period: 'Tarde', available: true },
-  { time: '17:00', period: 'Tarde', available: false },
-];
+export default function BookingForm({ onBookingComplete, onClose }) { // Añadimos onClose
+  const [formData, setFormData] = useState({
+    nombre: '',
+    telefono: '',
+    servicio: '',
+    estilista: 'Sin preferencia',
+    fecha: '',
+    hora: '',
+    notas: ''
+  });
 
-export default function BookingForm({ onBookingComplete }) {
-  const [selectedService, setSelectedService] = useState(null);
-  const [selectedStaff, setSelectedStaff] = useState(null);
-  const [selectedTime, setSelectedTime] = useState(null);
+  // Guardamos cada cambio en el formulario (opcional para debug o futuras validaciones)
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
-  // Convertimos el precio de string ("45€") a número para calcular
-  const parsePrice = (priceStr) => parseInt(priceStr.replace(/[^0-9]/g, '')) * 1000; // Ajuste a CLP aprox
-  const calculateDeposit = (price) => price * 0.25;
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.nombre || !formData.telefono) return alert("Por favor, ingresa tu nombre y teléfono.");
+
+    const reservasActuales = JSON.parse(localStorage.getItem('listaReservas') || "[]");
+    const nuevaReserva = { ...formData, id: Date.now() };
+    const nuevaLista = [...reservasActuales, nuevaReserva];
+    
+    localStorage.setItem('listaReservas', JSON.stringify(nuevaLista));
+    alert("✨ ¡Cita agendada con éxito! Te esperamos.");
+    onBookingComplete(); 
+  };
 
   return (
-    <div className="bg-white p-8 rounded-2xl">
-      <motion.h2 
-        initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-        className="text-2xl font-serif text-[#D4AF37] mb-6 text-center italic"
-      >
-        Reserva tu Experiencia
-      </motion.h2>
+    <div className="relative bg-[#fff5f8] p-8 md:p-12 rounded-[3rem] shadow-2xl max-w-4xl w-full border border-pink-100">
       
-      <div className="space-y-6">
-        {/* Selector de Servicio */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 italic">¿Qué servicio deseas?</label>
-          <select 
-            className="w-full p-3 border border-pink-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37] outline-none bg-white"
-            onChange={(e) => setSelectedService(serviciosData.find(s => s.id === parseInt(e.target.value)))}
-          >
-            <option value="">-- Seleccionar servicio --</option>
-            {serviciosData.map(s => (
-              <option key={s.id} value={s.id}>{s.nombre} ({s.precio})</option>
-            ))}
+      {/* BOTÓN DE CERRAR (La X) */}
+      <button 
+        onClick={onClose} 
+        className="absolute top-6 right-6 text-[#b02a6b] hover:scale-110 transition-transform font-bold text-2xl"
+      >
+        ✕
+      </button>
+
+      <div className="text-center mb-10">
+        <p className="text-[#f171ab] text-xs font-bold uppercase tracking-[0.2em] mb-2">Reserva Online</p>
+        <h2 className="text-4xl font-serif text-[#b02a6b] italic">Tu Nueva Imagen te Espera</h2>
+      </div>
+
+      {/* Nombre */}
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-2">
+          <label className="text-[#b02a6b] font-bold text-sm ml-2">Nombre completo</label>
+          <input name="nombre" value={formData.nombre} onChange={handleChange} type="text" placeholder="Ej: Maria Paz" className="input-pripelu" required />
+        </div>
+
+        {/* Teléfono con formato internacional para evitar confusiones */}
+        <div className="flex flex-col gap-2">
+          <label className="text-[#b02a6b] font-bold text-sm ml-2">Teléfono</label>
+          <input name="telefono" value={formData.telefono} onChange={handleChange} type="text" placeholder="+56 9..." className="input-pripelu" required />
+        </div>
+
+        {/* Servicio */}
+        <div className="flex flex-col gap-2">
+          <label className="text-[#b02a6b] font-bold text-sm ml-2">Servicio</label>
+          <select name="servicio" value={formData.servicio} onChange={handleChange} className="input-pripelu" required>
+            <option value="">Selecciona un servicio</option>
+            <option value="Corte Dama">Corte de Dama</option>
+            <option value="Colorimetría">Colorimetría</option>
+            <option value="Balayage">Balayage</option>
+            <option value="Peinado">Peinado Especial</option>
           </select>
         </div>
 
-        {/* Selector de Staff */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3 italic">Elige a tu profesional:</label>
-          <div className="grid grid-cols-3 gap-3">
-            {equipoData.map(member => (
-              <motion.button
-                key={member.id} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                onClick={() => setSelectedStaff(member)}
-                className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center ${
-                  selectedStaff?.id === member.id ? 'border-[#D4AF37] bg-pink-50' : 'border-pink-100 bg-white'
-                }`}
-              >
-                <span className="text-2xl mb-1">👤</span>
-                <span className="text-[10px] font-bold text-gray-800">{member.nombre.split(' ')[0]}</span>
-              </motion.button>
-            ))}
-          </div>
+        {/* Estilista (opcional, para que puedan elegir si quieren a alguien específico o no) */}
+        <div className="flex flex-col gap-2">
+          <label className="text-[#b02a6b] font-bold text-sm ml-2">Estilista</label>
+          <select 
+            name="estilista" 
+            value={formData.estilista} 
+            onChange={handleChange} 
+            className="input-pripelu"
+          >
+            <option value="Sin preferencia">Cualquier artista</option>
+            <option value="Pri">Pri</option>
+            <option value="Ana">Ana</option>
+            <option value="Elena">Elena</option>
+            <option value="Sofi">Sofi</option>
+          </select>
         </div>
 
-        {/* Selector de Horas */}
-        <AnimatePresence>
-          {selectedStaff && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-              <label className="block text-sm font-medium text-gray-700 mb-3 italic">Horas Disponibles:</label>
-              <div className="space-y-4">
-                {['Mañana', 'Tarde'].map(period => (
-                  <div key={period}>
-                    <span className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-widest">{period}</span>
-                    <div className="grid grid-cols-3 gap-2 mt-2">
-                      {TIME_SLOTS.filter(slot => slot.period === period).map(slot => (
-                        <button
-                          key={slot.time} disabled={!slot.available}
-                          onClick={() => setSelectedTime(slot.time)}
-                          className={`p-2 text-xs rounded-lg border transition-all ${
-                            !slot.available ? 'bg-gray-100 text-gray-400 line-through' : 
-                            selectedTime === slot.time ? 'bg-[#f171ab] border-[#D4AF37] text-white' : 'bg-white border-pink-100 text-gray-600'
-                          }`}
-                        >
-                          {slot.time}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Fecha */}
+        <div className="flex flex-col gap-2">
+          <label className="text-[#b02a6b] font-bold text-sm ml-2">Fecha</label>
+          <input name="fecha" value={formData.fecha} onChange={handleChange} type="date" className="input-pripelu" required />
+        </div>
 
-        {/* Resumen y Botón */}
-        {selectedService && selectedStaff && selectedTime && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 p-5 bg-pink-50 rounded-2xl border border-pink-100">
-            <div className="text-sm space-y-2 text-gray-600">
-              <div className="flex justify-between"><span>Profesional:</span><span className="font-bold">{selectedStaff.nombre}</span></div>
-              <div className="flex justify-between"><span>Hora:</span><span className="font-bold">{selectedTime} hrs</span></div>
-              <div className="border-t border-pink-200 mt-2 pt-2 flex justify-between text-[#D4AF37] font-bold text-lg">
-                <span>Abono (25%):</span>
-                <span>{selectedService.precio} (Ref)</span>
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {/* Hora */}
+        <div className="flex flex-col gap-2">
+          <label className="text-[#b02a6b] font-bold text-sm ml-2">Hora preferida</label>
+          <select 
+            name="hora" 
+            value={formData.hora} 
+            onChange={handleChange} 
+            className="input-pripelu"
+            required
+          >
+            <option value="">Selecciona una hora</option>
+            {/* Mañana */}
+            <option value="10:00">10:00 AM</option>
+            <option value="10:30">10:30 AM</option>
+            <option value="11:00">11:00 AM</option>
+            <option value="11:30">11:30 AM</option>
+            <option value="12:00">12:00 PM</option>
+            <option value="12:30">12:30 PM</option>
+            <option value="13:00">13:00 PM</option>
+            
+            {/* Tarde (asumiendo que almuerzan de 14 a 15) */}
+            <option value="15:00">15:00 PM</option>
+            <option value="15:30">15:30 PM</option>
+            <option value="16:00">16:00 PM</option>
+            <option value="16:30">16:30 PM</option>
+            <option value="17:00">17:00 PM</option>
+            <option value="17:30">17:30 PM</option>
+            <option value="18:00">18:00 PM</option>
+            <option value="18:30">18:30 PM</option>
+          </select>
+        </div>
 
-        <button 
-          disabled={!selectedService || !selectedStaff || !selectedTime}
-          onClick={onBookingComplete}
-          className="w-full bg-[#f171ab] text-white py-4 rounded-full font-bold shadow-lg disabled:bg-gray-200 transition-all uppercase tracking-widest text-sm"
-        >
+        {/* Notas (textarea para que puedan escribir cualquier detalle adicional, como alergias, preferencias, etc.) */}
+        <div className="flex flex-col gap-2 md:col-span-2">
+          <label className="text-[#b02a6b] font-bold text-sm ml-2">Notas</label>
+          <textarea name="notas" value={formData.notas} onChange={handleChange} placeholder="¿Alguna alergia o detalle?" className="input-pripelu h-24 resize-none"></textarea>
+        </div>
+
+        <button type="submit" className="md:col-span-2 bg-[#f171ab] text-white py-5 rounded-2xl font-bold text-lg shadow-lg hover:bg-[#d85a94] transition-all mt-4">
           Confirmar Reserva
         </button>
-      </div>
+      </form>
     </div>
   );
 }

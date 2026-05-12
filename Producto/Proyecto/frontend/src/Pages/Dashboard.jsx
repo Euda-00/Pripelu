@@ -1,108 +1,82 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, Users, DollarSign, CheckCircle } from 'lucide-react'; // Iconos pro
-
-const APPOINTMENTS = [
-  { id: 1, client: 'Martina Paz', service: 'Colorimetría', staff: 'Ana', time: '09:00', status: 'Pagado', deposit: 11250 },
-  { id: 2, client: 'Josefa Ignacia', service: 'Corte de Dama', staff: 'Elena', time: '11:00', status: 'Pagado', deposit: 6250 },
-  { id: 3, client: 'Valentina Soto', service: 'Alisado', staff: 'Carla', time: '15:00', status: 'Pendiente', deposit: 15000 },
-];
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
-  // RF06 - Sumamos los abonos del día para que tu tía sepa cuánto ha ganado
-  const totalCaja = APPOINTMENTS.reduce((acc, curr) => acc + curr.deposit, 0);
+  const [reservas, setReservas] = useState([]);
+
+  // Cargar las reservas del LocalStorage al entrar
+useEffect(() => {
+    // Leemos la lista completa
+    const datos = localStorage.getItem('listaReservas');
+    if (datos) {
+      setReservas(JSON.parse(datos)); // Cargamos todo el array de una
+    }
+  }, []);
+
+  const eliminarReserva = (id) => {
+    // 1. Filtramos la lista para quitar la que tenga ese ID
+    const nuevaLista = reservas.filter(res => res.id !== id);
+    
+    // 2. Actualizamos el estado para que desaparezca de la pantalla
+    setReservas(nuevaLista);
+    
+    // 3. Actualizamos el LocalStorage para que el cambio sea permanente
+    localStorage.setItem('listaReservas', JSON.stringify(nuevaLista));
+    
+    // Opcional: Un pequeño aviso
+    console.log("Reserva eliminada:", id);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <header className="mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-serif text-pripelu-gold italic font-bold">Panel Pripelu</h1>
-          <p className="text-gray-500">Gestión de citas y abonos diarios</p>
-        </div>
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-pripelu-pink flex items-center gap-4">
-          <div className="bg-pink-100 p-3 rounded-full text-pripelu-gold">
-            <DollarSign size={24} />
-          </div>
+    <div className="min-h-screen bg-[#fdf2f8] p-8">
+      <div className="max-w-6xl mx-auto">
+        <header className="flex justify-between items-center mb-10">
           <div>
-            <p className="text-xs text-gray-400 uppercase font-bold">Caja por Abonos</p>
-            <p className="text-xl font-bold text-gray-800">${totalCaja.toLocaleString()}</p>
+            <h1 className="text-3xl font-bold text-gray-800 italic">Panel de Control</h1>
+            <p className="text-[#f171ab] font-medium">Gestión de Citas - PriPelu Studio</p>
           </div>
-        </div>
-      </header>
+          <Link to="/" className="btn-nav flex items-center gap-2">
+            <span>🏠</span> Volver al Sitio
+          </Link>
+        </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Tabla de Citas (RF12) */}
-        <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-50 flex justify-between items-center">
-            <h3 className="font-bold text-gray-700 flex items-center gap-2">
-              <Calendar className="text-pripelu-gold" size={20} /> Próximas Citas
-            </h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 text-gray-400 text-[10px] uppercase tracking-widest">
-                <tr>
-                  <th className="px-6 py-4">Cliente</th>
-                  <th className="px-6 py-4">Servicio</th>
-                  <th className="px-6 py-4">Estilista</th>
-                  <th className="px-6 py-4">Hora</th>
-                  <th className="px-6 py-4">Estado</th>
+        <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-pink-100">
+          <table className="w-full text-left">
+            <thead className="bg-pink-50 text-[#f171ab] uppercase text-xs font-bold">
+              <tr>
+                <th className="px-6 py-4">Cliente</th>
+                <th className="px-6 py-4">Servicio</th>
+                <th className="px-6 py-4">Fecha/Hora</th>
+                <th className="px-6 py-4">Contacto</th>
+                <th className="px-6 py-4 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-pink-50">
+              {reservas.length > 0 ? reservas.map((res, index) => (
+                <tr key={index} className="hover:bg-pink-50/30 transition-colors">
+                  <td className="px-6 py-4 font-bold text-gray-700">{res.nombre}</td>
+                  <td className="px-6 py-4 text-gray-500 italic">{res.servicio}</td>
+                  <td className="px-6 py-4 text-gray-600">{res.fecha} - {res.hora}</td>
+                  <td className="px-6 py-4 text-gray-500">{res.telefono}</td>
+                  <td className="px-6 py-4 text-center">
+                    <button 
+                      onClick={() => eliminarReserva(res.id)} // <--- Conectamos la función
+                      className="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl font-bold transition-all text-xs"
+                    >
+                      Eliminar
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {APPOINTMENTS.map((app) => (
-                  <motion.tr 
-                    key={app.id} 
-                    whileHover={{ backgroundColor: "#fff5f7" }}
-                    className="text-sm text-gray-600"
-                  >
-                    <td className="px-6 py-4 font-bold text-gray-800">{app.client}</td>
-                    <td className="px-6 py-4">{app.service}</td>
-                    <td className="px-6 py-4">
-                      <span className="bg-pink-50 text-pripelu-gold px-2 py-1 rounded-md text-xs font-bold">
-                        {app.staff}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 font-mono">{app.time}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1 text-green-500 font-bold text-xs">
-                        <CheckCircle size={14} /> {app.status}
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              )) : (
+                <tr>
+                  <td colSpan="5" className="px-6 py-20 text-center text-gray-400 italic">
+                    No hay reservas registradas todavía...
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-
-        {/* Resumen de Staff (RF13) */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-          <h3 className="font-bold text-gray-700 mb-6 flex items-center gap-2">
-            <Users className="text-pripelu-gold" size={20} /> Desempeño Staff
-          </h3>
-          <div className="space-y-6">
-            {['Ana', 'Elena', 'Carla'].map(name => (
-              <div key={name} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-pripelu-pink rounded-full flex items-center justify-center text-white font-bold">
-                    {name[0]}
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">{name}</span>
-                </div>
-                <span className="text-xs bg-gray-100 px-3 py-1 rounded-full text-gray-500 font-bold">
-                  {Math.floor(Math.random() * 5) + 1} citas
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <button 
-                onClick={() => alert('Caja cerrada: Se ha enviado el resumen al correo de la dueña.')}
-                className="mt-4 w-full bg-pripelu-gold text-white py-2 rounded-xl font-bold hover:bg-opacity-90 transition-all shadow-md text-xs uppercase tracking-widest"
-              >
-                Finalizar Jornada
-              </button>
       </div>
     </div>
   );

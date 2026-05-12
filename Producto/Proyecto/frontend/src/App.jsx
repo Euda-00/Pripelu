@@ -1,43 +1,37 @@
 import React, { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import LandingPage from './pages/LandingPage';
-import BookingForm from './pages/BookingForm';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LandingPage from './Pages/LandingPage';
+import Dashboard from './Pages/Dashboard';
+import BookingForm from './Pages/BookingForm'; // Importa tu form
 
-export default function App() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+function App() {
+  const [showModal, setShowModal] = useState(false);
+
+  // Esta es la función que abre el modal
+  const handleOpenModal = () => setShowModal(true);
+  
+  // Esta lo cierra cuando terminan
+  const handleCloseModal = () => setShowModal(false);
 
   return (
-    <div className="relative">
-      <LandingPage onStartBooking={() => setIsModalOpen(true)} />
+    <Router>
+      <Routes>
+        {/* PASO CLAVE: Pasamos la función a la LandingPage */}
+        <Route path="/" element={<LandingPage onStartBooking={handleOpenModal} />} />
+        <Route path="/admin" element={<Dashboard />} />
+      </Routes>
 
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            {/* Fondo difuminado */}
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setIsModalOpen(false)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-md"
-            />
-
-            {/* Popup */}
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-lg bg-white rounded-[3rem] shadow-2xl z-10 overflow-hidden"
-            >
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="absolute top-6 right-6 text-gray-400 hover:text-[#f171ab] font-bold"
-              >
-                ✕
-              </button>
-              <div className="max-h-[85vh] overflow-y-auto">
-                <BookingForm onBookingComplete={() => setIsModalOpen(false)} />
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </div>
+      /* MOSTRAMOS EL FORMULARIO COMO UN MODAL SOBRE LA LANDING PAGE */
+      {showModal && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <BookingForm 
+          onBookingComplete={handleCloseModal} 
+          onClose={handleCloseModal} // <--- Pasamos la función aquí
+        />
+      </div>
+    )}
+    </Router>
   );
 }
+
+export default App;
