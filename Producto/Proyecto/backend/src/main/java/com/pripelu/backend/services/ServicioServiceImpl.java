@@ -49,6 +49,7 @@ public class ServicioServiceImpl implements ServicioServices {
     @Override
     @Transactional
     public void eliminar(Long id) {
-        servicioRepo.deleteById(id);
+        Servicio servicio = obtenerPorId(id);
+        servicioRepo.delete(servicio);
     }
 }

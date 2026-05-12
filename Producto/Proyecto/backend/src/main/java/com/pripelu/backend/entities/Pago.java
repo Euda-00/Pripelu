@@ -20,7 +20,7 @@ public class Pago {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_pago")
-    private Integer idPago;
+    private Long idPago;
 
     @OneToOne
     @JoinColumn(name = "id_cita", nullable = false)

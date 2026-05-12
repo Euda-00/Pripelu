@@ -58,6 +58,6 @@ public class HorarioServiceImpl implements HorarioServices {
 
     @Transactional(readOnly = true)
     public List<Horario> obtenerPorEmpleado(Long empleadoId) {
-        return horarioRepo.findByEmpleadosId(empleadoId);
+        return horarioRepo.findByEmpleadoId(empleadoId);
     }
 }

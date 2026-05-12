@@ -47,6 +47,7 @@ public class InventarioServiceImpl implements InventarioServices {
     @Override
     @Transactional
     public void eliminar(Long id) {
-        inventarioRepo.deleteById(id);
+        Inventario inventario = obtenerPorId(id); 
+        inventarioRepo.delete(inventario);
     }
 }
