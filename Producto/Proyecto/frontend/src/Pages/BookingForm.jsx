@@ -19,15 +19,21 @@ export default function BookingForm({ onBookingComplete, onClose }) { // Añadim
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.nombre || !formData.telefono) return alert("Por favor, ingresa tu nombre y teléfono.");
-
-    const reservasActuales = JSON.parse(localStorage.getItem('listaReservas') || "[]");
-    const nuevaReserva = { ...formData, id: Date.now() };
-    const nuevaLista = [...reservasActuales, nuevaReserva];
     
+    if (!formData.nombre || !formData.telefono) return alert("Completa los datos");
+
+    // 1. Traer lo que ya existe en el LocalStorage o un array vacío si no hay nada
+    const reservasActuales = JSON.parse(localStorage.getItem('listaReservas') || "[]");
+
+    // 2. Crear la nueva reserva con un ID único para que no se repitan
+    const nuevaReserva = { ...formData, id: Date.now() };
+
+    // 3. Guardar la lista actualizada
+    const nuevaLista = [...reservasActuales, nuevaReserva];
     localStorage.setItem('listaReservas', JSON.stringify(nuevaLista));
-    alert("✨ ¡Cita agendada con éxito! Te esperamos.");
-    onBookingComplete(); 
+
+    alert("✅ Cita agendada con éxito");
+    onBookingComplete(formData);
   };
 
   return (

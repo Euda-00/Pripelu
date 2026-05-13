@@ -1,25 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Play, MapPin, Phone, Clock } from 'lucide-react';
+import { Play, MapPin, Phone, Clock, User, LogOut, Settings, Calendar } from 'lucide-react';
 import { serviciosData, equipoData, floresData } from '../data';
 import { TarjetaEquipo } from '../components/TarjetasEquipo';
 import { FloatingFlower } from '../components/Flores';
 import { Comparador } from '../components/Comparador';
-import '../styles/pripelu.css'; // Importamos tus nuevas clases
-import Dashboard from './Dashboard';
-import { Link } from 'react-router-dom';
+import '../styles/pripelu.css'; 
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function LandingPage({ onStartBooking }) {
+  const [showDropdown, setShowDropdown] = useState(false);
+  const navigate = useNavigate();
+
+  // 1. Detectamos estado del usuario
+  const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+  const userRole = localStorage.getItem('userRole'); // 'admin' o 'cliente'
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setShowDropdown(false);
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen bg-[#fdf2f8] relative overflow-x-hidden font-sans">
       
-      {/* 1. DECORACIÓN DE FONDO */}
+      {/* DECORACIÓN DE FONDO */}
       {floresData.map((f) => (
         <FloatingFlower key={f.id} {...f} />
       ))}
 
-      {/* 2. NAVEGACIÓN */}
-      <nav className="relative z-20 flex justify-between items-center px-8 md:px-12 py-6 bg-white/30 backdrop-blur-md sticky top-0 border-b border-pink-100">
+      {/* 2. NAVEGACIÓN MODIFICADA */}
+      <nav className="relative z-[100] flex justify-between items-center px-8 md:px-12 py-6 bg-white/30 backdrop-blur-md sticky top-0 border-b border-pink-100">
         <div className="flex items-center gap-3">
           <div className="bg-white p-2 rounded-full shadow-sm">
             <img src="/logo-pripelu.png" alt="Logo" className="w-8" />
@@ -35,11 +47,51 @@ export default function LandingPage({ onStartBooking }) {
           ))}
         </div>
 
-        <button onClick={onStartBooking} className="btn-nav">
-          Reservar Cita
-        </button>
+        {/* --- SECCIÓN DE PERFIL / LOGIN --- */}
+        <div className="relative">
+          {isAuth ? (
+            <div className="relative">
+              {/* Círculo de Perfil */}
+              <button 
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="w-10 h-10 rounded-full bg-[#f171ab] text-white font-bold flex items-center justify-center border-2 border-white shadow-lg hover:scale-105 transition-all"
+              >
+                {userRole === 'admin' ? 'A' : 'U'}
+              </button>
 
-        
+              {/* Menú Desplegable */}
+              {showDropdown && (
+                <div className="absolute right-0 mt-3 w-52 bg-white rounded-3xl shadow-2xl border border-pink-50 overflow-hidden animate-in fade-in zoom-in duration-200">
+                  <div className="p-4 border-b border-gray-50 bg-pink-50/20 text-center">
+                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Mi Cuenta</p>
+                    <p className="text-[#b02a6b] text-xs font-bold italic">{userRole === 'admin' ? 'Administrador' : 'Cliente'}</p>
+                  </div>
+                  
+                  <Link to="/mis-citas" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-5 py-4 text-sm text-gray-600 hover:bg-pink-50 transition-colors">
+                    <Calendar size={16} /> Mis Citas
+                  </Link>
+
+                  {userRole === 'admin' && (
+                    <Link to="/admin" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-5 py-4 text-sm text-[#b02a6b] font-bold hover:bg-pink-50 transition-colors border-t border-gray-50">
+                      <Settings size={16} /> Panel Admin
+                    </Link>
+                  )}
+
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-5 py-4 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-gray-50"
+                  >
+                    <LogOut size={16} /> Cerrar Sesión
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link to="/login" className="btn-nav flex items-center gap-2">
+              <span>🔒</span> Login
+            </Link>
+          )}
+        </div>
       </nav>
 
       {/* 3. HERO SECTION */}
@@ -50,14 +102,7 @@ export default function LandingPage({ onStartBooking }) {
         >
           ✨ Experiencia Premium en Belleza
         </motion.div>
-       {/* BOTÓN TEMPORAL AL ADMIN */}
-        <Link 
-          to="/admin" 
-          className="bg-gray-100 hover:bg-gray-200 text-gray-500 px-4 py-2 rounded-lg transition-all border border-dashed border-gray-300"
-        >
-          ⚙️ Acceso Admin (Temporal)
-        </Link>
-  
+
         <motion.img
           initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
           src="/logo-pripelu-gold.png" alt="PriPelu Gold"
@@ -140,7 +185,7 @@ export default function LandingPage({ onStartBooking }) {
             <h2 className="text-3xl font-bold text-gray-800 mb-8 italic">Visítanos en Maipú</h2>
             
             <div className="space-y-6">
-              <ContactInfo icon={<MapPin size={20}/>} title="Dirección" content="Calle Falsa 123, Maipú, Santiago." />
+              <ContactInfo icon={<MapPin size={20}/>} title="Dirección" content="Maipú, Santiago." />
               <ContactInfo icon={<Phone size={20}/>} title="WhatsApp" content="+56 9 1234 5678" />
               <ContactInfo icon={<Clock size={20}/>} title="Horario" content="Mar - Sáb: 10:00 - 19:00 hrs" />
             </div>
@@ -157,14 +202,13 @@ export default function LandingPage({ onStartBooking }) {
       </section>
 
       {/* 8. FOOTER */}
-      <footer className="bg-white py-12 text-center text-gray-400 text-xs border-t border-pink-50">
+      <footer className="bg-white py-12 text-center text-gray-400 text-xs border-t border-pink-50 flex flex-col items-center gap-2">
         <p>© 2026 PriPelu Studio. Maipú, Santiago. Diseñado con ✨</p>
       </footer>
     </div>
   );
 }
 
-// Sub-componente para limpiar la sección de contacto
 const ContactInfo = ({ icon, title, content }) => (
   <div className="flex items-start gap-4">
     <div className="bg-pink-50 p-3 rounded-2xl text-[#f171ab]">{icon}</div>

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const [reservas, setReservas] = useState([]);
-
+  const navigate = useNavigate();
+  // Verificamos autenticación al cargar el componente
   // Cargar las reservas del LocalStorage al entrar
 useEffect(() => {
     // Leemos la lista completa
@@ -27,6 +29,11 @@ useEffect(() => {
     console.log("Reserva eliminada:", id);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    navigate('/login');
+  }
+
   return (
     <div className="min-h-screen bg-[#fdf2f8] p-8">
       <div className="max-w-6xl mx-auto">
@@ -35,6 +42,9 @@ useEffect(() => {
             <h1 className="text-3xl font-bold text-gray-800 italic">Panel de Control</h1>
             <p className="text-[#f171ab] font-medium">Gestión de Citas - PriPelu Studio</p>
           </div>
+          <button onClick={handleLogout} className="bg-[#f171ab] text-white px-4 py-2 rounded-xl font-bold hover:bg-[#d85a94] transition-all">
+            Cerrar Sesión
+          </button>
           <Link to="/" className="btn-nav flex items-center gap-2">
             <span>🏠</span> Volver al Sitio
           </Link>
