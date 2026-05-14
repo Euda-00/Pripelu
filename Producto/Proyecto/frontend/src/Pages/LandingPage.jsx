@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Play, MapPin, Phone, Clock, User, LogOut, Settings, Calendar } from 'lucide-react';
+import { Play, MapPin, Phone, Clock, User, LogOut, Settings, Calendar, ClipboardList } from 'lucide-react';
 import { serviciosData, equipoData, floresData } from '../data';
 import { TarjetaEquipo } from '../components/TarjetasEquipo';
 import { FloatingFlower } from '../components/Flores';
@@ -12,14 +12,15 @@ export default function LandingPage({ onStartBooking }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
 
-  // 1. Detectamos estado del usuario
+  // 1. Detectamos estado del usuario y rol
   const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-  const userRole = localStorage.getItem('userRole'); // 'admin' o 'cliente'
+  const userRole = localStorage.getItem('userRole'); 
 
   const handleLogout = () => {
     localStorage.clear();
     setShowDropdown(false);
     navigate('/');
+    window.location.reload(); // Recargamos para limpiar estados
   };
 
   return (
@@ -30,7 +31,7 @@ export default function LandingPage({ onStartBooking }) {
         <FloatingFlower key={f.id} {...f} />
       ))}
 
-      {/* 2. NAVEGACIÓN MODIFICADA */}
+      {/* 2. NAVEGACIÓN */}
       <nav className="relative z-[100] flex justify-between items-center px-8 md:px-12 py-6 bg-white/30 backdrop-blur-md sticky top-0 border-b border-pink-100">
         <div className="flex items-center gap-3">
           <div className="bg-white p-2 rounded-full shadow-sm">
@@ -51,29 +52,40 @@ export default function LandingPage({ onStartBooking }) {
         <div className="relative">
           {isAuth ? (
             <div className="relative">
-              {/* Círculo de Perfil */}
               <button 
                 onClick={() => setShowDropdown(!showDropdown)}
                 className="w-10 h-10 rounded-full bg-[#f171ab] text-white font-bold flex items-center justify-center border-2 border-white shadow-lg hover:scale-105 transition-all"
               >
-                {userRole === 'admin' ? 'A' : 'U'}
+                {/* Letra inicial según el rol */}
+                {userRole === 'admin' ? 'A' : userRole === 'empleado' ? 'E' : 'U'}
               </button>
 
-              {/* Menú Desplegable */}
               {showDropdown && (
-                <div className="absolute right-0 mt-3 w-52 bg-white rounded-3xl shadow-2xl border border-pink-50 overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div className="absolute right-0 mt-3 w-56 bg-white rounded-3xl shadow-2xl border border-pink-50 overflow-hidden animate-in fade-in zoom-in duration-200">
                   <div className="p-4 border-b border-gray-50 bg-pink-50/20 text-center">
                     <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Mi Cuenta</p>
-                    <p className="text-[#b02a6b] text-xs font-bold italic">{userRole === 'admin' ? 'Administrador' : 'Cliente'}</p>
+                    <p className="text-[#b02a6b] text-xs font-bold italic">
+                      {userRole === 'admin' && 'Administradora'}
+                      {userRole === 'empleado' && 'Staff PriPelu'}
+                      {userRole === 'cliente' && 'Cliente'}
+                    </p>
                   </div>
                   
+                  {/* OPCIONES COMUNES */}
                   <Link to="/mis-citas" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-5 py-4 text-sm text-gray-600 hover:bg-pink-50 transition-colors">
                     <Calendar size={16} /> Mis Citas
                   </Link>
 
+                  {/* OPCIÓN SEGÚN ROL */}
                   {userRole === 'admin' && (
                     <Link to="/admin" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-5 py-4 text-sm text-[#b02a6b] font-bold hover:bg-pink-50 transition-colors border-t border-gray-50">
-                      <Settings size={16} /> Panel Admin
+                      <Settings size={16} /> Panel de Gestión
+                    </Link>
+                  )}
+
+                  {userRole === 'empleado' && (
+                    <Link to="/mis-citas" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-5 py-4 text-sm text-blue-600 font-bold hover:bg-blue-50 transition-colors border-t border-gray-50">
+                      <ClipboardList size={16} /> Ver Mi Agenda
                     </Link>
                   )}
 
@@ -88,7 +100,7 @@ export default function LandingPage({ onStartBooking }) {
             </div>
           ) : (
             <Link to="/login" className="btn-nav flex items-center gap-2">
-              <span>🔒</span> Login
+              <span>🔒</span> Iniciar Sesión
             </Link>
           )}
         </div>
@@ -168,7 +180,7 @@ export default function LandingPage({ onStartBooking }) {
         </div>
       </section>
 
-      {/* 6. GALERÍA (ANTES/DESPUÉS) */}
+      {/* 6. GALERÍA */}
       <section id="galería" className="section-container bg-white">
         <div className="section-title-wrapper">
           <p className="section-subtitle">Resultados Reales</p>
@@ -177,7 +189,7 @@ export default function LandingPage({ onStartBooking }) {
         <Comparador antes="/tu-foto-antes.jpg" despues="/tu-foto-despues.jpg" />
       </section>
 
-      {/* 7. CONTACTO Y UBICACIÓN */}
+      {/* 7. CONTACTO */}
       <section className="section-container bg-[#fdf2f8]">
         <div className="max-w-4xl mx-auto bg-white rounded-[3rem] shadow-xl overflow-hidden border border-pink-100 flex flex-col md:flex-row">
           <div className="p-12 md:w-1/2">
@@ -193,7 +205,6 @@ export default function LandingPage({ onStartBooking }) {
 
           <div className="bg-[#f171ab] p-12 md:w-1/2 flex flex-col items-center justify-center text-center text-white">
             <h3 className="text-2xl font-bold mb-4 italic">¿Lista para un cambio?</h3>
-            <p className="text-pink-100 mb-8 text-sm leading-relaxed">Asegura tu atención personalizada hoy mismo.</p>
             <button onClick={onStartBooking} className="bg-white text-[#f171ab] px-10 py-4 rounded-full font-bold shadow-lg hover:bg-pink-50 transition-all">
               Agendar ahora
             </button>
@@ -202,7 +213,7 @@ export default function LandingPage({ onStartBooking }) {
       </section>
 
       {/* 8. FOOTER */}
-      <footer className="bg-white py-12 text-center text-gray-400 text-xs border-t border-pink-50 flex flex-col items-center gap-2">
+      <footer className="bg-white py-12 text-center text-gray-400 text-xs border-t border-pink-50">
         <p>© 2026 PriPelu Studio. Maipú, Santiago. Diseñado con ✨</p>
       </footer>
     </div>

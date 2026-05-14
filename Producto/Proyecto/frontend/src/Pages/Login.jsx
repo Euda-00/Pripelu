@@ -6,18 +6,32 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    
-    // Lógica temporal (Mock) hasta que conectes tu DB
-    if (email === 'admin@pripelu.cl' && password === '123456') {
-      localStorage.setItem('isAuthenticated', 'true');
-      navigate('/admin'); // Nos vamos al dashboard
-    } else {
-      alert('Credenciales incorrectas.');
-    }
-  };
+  
+    const handleLogin = (e) => {
+        e.preventDefault();
+        localStorage.clear();
 
+        // 1. LOGIN ADMINISTRADOR (RF02 - ERS)
+        if (email === 'admin@pripelu.cl' && password === '123456') {
+          localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('userRole', 'admin');
+          localStorage.setItem('userName', 'Pri');
+          navigate('/admin');
+        } 
+        // 2. LOGIN EMPLEADO / STAFF (RF09 - ERS)
+        else if (email === 'ana@pripelu.cl' || email === 'empleado@pripelu.cl') {
+          localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('userRole', 'empleado');
+          localStorage.setItem('userName', 'Ana'); 
+          navigate('/mis-citas');
+        } 
+        // 3. LOGIN CLIENTE (RF01 - ERS)
+        else {
+          localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('userRole', 'cliente');
+          navigate('/');
+        }
+      };
   return (
     <div className="min-h-screen bg-[#fdf2f8] flex items-center justify-center p-4">
       <div className="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md border border-pink-100">

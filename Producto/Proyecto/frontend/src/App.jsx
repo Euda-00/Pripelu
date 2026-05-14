@@ -6,7 +6,7 @@ import BookingForm from './Pages/BookingForm';
 import Login from './Pages/Login';
 import ProtectedRoute from './components/ProtectedRute';
 import Register from './Pages/Register';
-
+import StaffDashboard from './Pages/StaffDashboard';
 
 function App() {
   const [showModal, setShowModal] = useState(false);
@@ -33,6 +33,14 @@ function App() {
         <Route path="/" element={<LandingPage onStartBooking={handleOpenModal} />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route 
+          path="/mis-citas" 
+          element={
+            <ProtectedRoute>
+              <StaffDashboard /> 
+            </ProtectedRoute>
+          } 
+        />
         <Route 
           path="/admin"
           element={
