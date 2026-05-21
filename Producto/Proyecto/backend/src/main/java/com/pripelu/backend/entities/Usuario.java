@@ -31,11 +31,14 @@ public class Usuario {
     @Column(name = "Apellido", length = 50, nullable = false)
     private String apellido;
 
-    @Column(name = "Contrasena", length = 25, nullable = false)
+    @Column(name = "Contrasena", length = 100, nullable = false)
     private String contrasena;
 
     @Column(name = "Email",length = 50, unique = true, nullable = false)
     private String email;
+
+    @Column(name = "Rol", length = 20)
+    private String rol;
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
