@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // <-- IMPORTANTE: Agregar useEffect
 import { motion } from 'framer-motion';
 import { Play, MapPin, Phone, Clock, User, LogOut, Settings, Calendar, ClipboardList } from 'lucide-react';
-import { serviciosData, equipoData, floresData } from '../data';
+// IMPORTANTE: Ya no necesitamos importar 'serviciosData' desde '../data'
+import { equipoData, floresData } from '../data'; 
 import { TarjetaEquipo } from '../components/TarjetasEquipo';
 import { FloatingFlower } from '../components/Flores';
 import { Comparador } from '../components/Comparador';
@@ -12,15 +13,39 @@ export default function LandingPage({ onStartBooking }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
 
-  // 1. Detectamos estado del usuario y rol
+  // --- NUEVO ESTADO PARA LOS SERVICIOS DE MYSQL ---
+  const [servicios, setServicios] = useState([]);
+  const [cargandoServicios, setCargandoServicios] = useState(true);
+
   const isAuth = localStorage.getItem('isAuthenticated') === 'true';
   const userRole = localStorage.getItem('userRole'); 
+
+  // --- NUEVO: LLAMADA AL BACKEND AL CARGAR LA PÁGINA ---
+  useEffect(() => {
+    const obtenerServicios = async () => {
+      try {
+        const respuesta = await fetch('http://localhost:8080/api/servicios');
+        if (respuesta.ok) {
+          const datos = await respuesta.json();
+          setServicios(datos);
+        } else {
+          console.error('Error al traer los servicios del backend');
+        }
+      } catch (error) {
+        console.error('Falla en la conexión con el servidor:', error);
+      } finally {
+        setCargandoServicios(false);
+      }
+    };
+
+    obtenerServicios();
+  }, []);
 
   const handleLogout = () => {
     localStorage.clear();
     setShowDropdown(false);
     navigate('/');
-    window.location.reload(); // Recargamos para limpiar estados
+    window.location.reload(); 
   };
 
   return (
@@ -31,9 +56,10 @@ export default function LandingPage({ onStartBooking }) {
         <FloatingFlower key={f.id} {...f} />
       ))}
 
-      {/* 2. NAVEGACIÓN */}
+      {/* NAVEGACIÓN (Se mantiene intacta) */}
       <nav className="relative z-[100] flex justify-between items-center px-8 md:px-12 py-6 bg-white/30 backdrop-blur-md sticky top-0 border-b border-pink-100">
-        <div className="flex items-center gap-3">
+        {/* ... (Tu código de navegación original) ... */}
+         <div className="flex items-center gap-3">
           <div className="bg-white p-2 rounded-full shadow-sm">
             <img src="/logo-pripelu.png" alt="Logo" className="w-8" />
           </div>
@@ -48,7 +74,6 @@ export default function LandingPage({ onStartBooking }) {
           ))}
         </div>
 
-        {/* --- SECCIÓN DE PERFIL / LOGIN --- */}
         <div className="relative">
           {isAuth ? (
             <div className="relative">
@@ -56,7 +81,6 @@ export default function LandingPage({ onStartBooking }) {
                 onClick={() => setShowDropdown(!showDropdown)}
                 className="w-10 h-10 rounded-full bg-[#f171ab] text-white font-bold flex items-center justify-center border-2 border-white shadow-lg hover:scale-105 transition-all"
               >
-                {/* Letra inicial según el rol */}
                 {userRole === 'admin' ? 'A' : userRole === 'empleado' ? 'E' : 'U'}
               </button>
 
@@ -71,12 +95,10 @@ export default function LandingPage({ onStartBooking }) {
                     </p>
                   </div>
                   
-                  {/* OPCIONES COMUNES */}
                   <Link to="/mis-citas" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-5 py-4 text-sm text-gray-600 hover:bg-pink-50 transition-colors">
                     <Calendar size={16} /> Mis Citas
                   </Link>
 
-                  {/* OPCIÓN SEGÚN ROL */}
                   {userRole === 'admin' && (
                     <Link to="/admin" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-5 py-4 text-sm text-[#b02a6b] font-bold hover:bg-pink-50 transition-colors border-t border-gray-50">
                       <Settings size={16} /> Panel de Gestión
@@ -106,9 +128,10 @@ export default function LandingPage({ onStartBooking }) {
         </div>
       </nav>
 
-      {/* 3. HERO SECTION */}
+      {/* HERO SECTION (Se mantiene intacta) */}
       <header className="relative z-10 flex flex-col items-center justify-center min-h-[90vh] text-center px-4 pt-10">
-        <motion.div 
+        {/* ... (Tu código del Hero original) ... */}
+         <motion.div 
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           className="bg-pink-100/60 backdrop-blur-sm text-[#f171ab] px-5 py-1 rounded-full text-xs font-bold mb-8 flex items-center gap-2"
         >
@@ -135,7 +158,6 @@ export default function LandingPage({ onStartBooking }) {
           </button>
         </div>
 
-        {/* Scroll Indicator */}
         <div className="mt-auto pb-10">
           <motion.div animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="border-2 border-pink-300 w-7 h-12 rounded-full flex justify-center p-1.5">
             <motion.div animate={{ y: [0, 15, 0] }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-1 h-3 bg-pink-400 rounded-full" />
@@ -143,32 +165,39 @@ export default function LandingPage({ onStartBooking }) {
         </div>
       </header>
 
-      {/* 4. SECCIÓN SERVICIOS */}
+      {/* --- SECCIÓN SERVICIOS ACTUALIZADA --- */}
       <section id="servicios" className="section-container bg-white rounded-t-[4rem] shadow-2xl">
         <div className="section-title-wrapper">
           <p className="section-subtitle">Nuestros Servicios</p>
           <h2 className="section-title">Experiencias Únicas</h2>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-7xl mx-auto">
-          {serviciosData.map((s) => (
-            <motion.div key={s.id} whileHover={{ y: -10 }} className="card-pripelu group">
-              <div className="w-16 h-16 bg-pink-50 rounded-2xl flex items-center justify-center text-[#f171ab] mb-6 group-hover:bg-[#f171ab] group-hover:text-white transition-all">
-                {React.cloneElement(s.icon, { size: 28 })}
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-3">{s.nombre}</h3>
-              <p className="text-gray-500 text-sm italic mb-8">{s.desc}</p>
-              <div className="flex justify-between items-center border-t border-pink-50 pt-8">
-                <span className="text-[#f171ab] font-bold text-xl italic">Desde {s.precio}</span>
-                <button className="text-[#f171ab] hover:translate-x-2 transition-transform"><Play size={18} fill="currentColor" /></button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+        {cargandoServicios ? (
+           <p className="text-center text-[#f171ab] font-bold text-xl py-10">Cargando catálogo...</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-7xl mx-auto">
+            {/* AQUÍ MAPEA LOS SERVICIOS DE MYSQL EN TUS TARJETAS ORIGINALES */}
+            {servicios.map((s) => (
+              <motion.div key={s.id_servicio || s.id} whileHover={{ y: -10 }} className="card-pripelu group">
+                <div className="w-16 h-16 bg-pink-50 rounded-2xl flex items-center justify-center text-[#f171ab] mb-6 group-hover:bg-[#f171ab] group-hover:text-white transition-all">
+                  {/* Como el ícono no viene de la BD, le ponemos uno por defecto para que no rompa */}
+                  <Settings size={28} /> 
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-3">{s.nombre}</h3>
+                <p className="text-gray-500 text-sm italic mb-8 h-10 overflow-hidden">{s.descripcion}</p>
+                <div className="flex justify-between items-center border-t border-pink-50 pt-8">
+                  <span className="text-[#f171ab] font-bold text-xl italic">${s.precio}</span>
+                  <span className="text-xs text-gray-400 font-bold">{s.duracion_min || s.duracion} min</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* 5. SECCIÓN EQUIPO */}
+      {/* SECCIÓN EQUIPO (Se mantiene intacta) */}
       <section id="equipo" className="section-container bg-[#fdf2f8]">
+        {/* ... (Tu código de Equipo original) ... */}
         <div className="section-title-wrapper">
           <p className="section-subtitle">Profesionales</p>
           <h2 className="section-title text-[#f171ab]">Artistas del Cabello</h2>
@@ -180,18 +209,20 @@ export default function LandingPage({ onStartBooking }) {
         </div>
       </section>
 
-      {/* 6. GALERÍA */}
+      {/* GALERÍA (Se mantiene intacta) */}
       <section id="galería" className="section-container bg-white">
-        <div className="section-title-wrapper">
+        {/* ... (Tu código de Galería original) ... */}
+         <div className="section-title-wrapper">
           <p className="section-subtitle">Resultados Reales</p>
           <h2 className="section-title">Transformaciones Mágicas</h2>
         </div>
         <Comparador antes="/tu-foto-antes.jpg" despues="/tu-foto-despues.jpg" />
       </section>
 
-      {/* 7. CONTACTO */}
+      {/* CONTACTO (Se mantiene intacta) */}
       <section className="section-container bg-[#fdf2f8]">
-        <div className="max-w-4xl mx-auto bg-white rounded-[3rem] shadow-xl overflow-hidden border border-pink-100 flex flex-col md:flex-row">
+        {/* ... (Tu código de Contacto original) ... */}
+         <div className="max-w-4xl mx-auto bg-white rounded-[3rem] shadow-xl overflow-hidden border border-pink-100 flex flex-col md:flex-row">
           <div className="p-12 md:w-1/2">
             <p className="section-subtitle">Encuéntranos</p>
             <h2 className="text-3xl font-bold text-gray-800 mb-8 italic">Visítanos en Maipú</h2>
@@ -212,7 +243,7 @@ export default function LandingPage({ onStartBooking }) {
         </div>
       </section>
 
-      {/* 8. FOOTER */}
+      {/* FOOTER (Se mantiene intacta) */}
       <footer className="bg-white py-12 text-center text-gray-400 text-xs border-t border-pink-50">
         <p>© 2026 PriPelu Studio. Maipú, Santiago. Diseñado con ✨</p>
       </footer>

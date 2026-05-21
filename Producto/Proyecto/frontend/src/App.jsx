@@ -1,38 +1,44 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom'; // Agregué useNavigate aquí por si acaso
 import LandingPage from './Pages/LandingPage';
 import Dashboard from './Pages/Dashboard';
 import BookingForm from './Pages/BookingForm'; 
 import Login from './Pages/Login';
-import ProtectedRoute from './components/ProtectedRute';
+import ProtectedRoute from './components/ProtectedRute'; // Ojo con la "Rute", si el archivo se llama así, está bien.
 import Register from './Pages/Register';
 import StaffDashboard from './Pages/StaffDashboard';
+
+// 1. IMPORTA EL CATÁLOGO DESDE LA CARPETA PAGES
+import Servicios from './components/Servicios'; 
 
 function App() {
   const [showModal, setShowModal] = useState(false);
 
-  // Esta es la función que abre el modal
   const handleOpenModal = () => {
-  const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-  
-  if (isAuth) {
-    setShowModal(true); // Si está logueado, abre el form
-  } else {
-    alert("Para agendar tu cita, primero debes iniciar sesión o crear una cuenta ✨");
-    navigate('/login'); // Si no, mándalo a loguearse
-  }
+    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+    
+    if (isAuth) {
+      setShowModal(true); 
+    } else {
+      alert("Para agendar tu cita, primero debes iniciar sesión o crear una cuenta ✨");
+      // Ojo: navigate solo funciona dentro de un componente Router, 
+      // si te tira error al cliquear el botón en la Landing, te enseño cómo arreglarlo rápido.
+      window.location.href = '/login'; 
+    }
   };
   
-  // Esta lo cierra cuando terminan
   const handleCloseModal = () => setShowModal(false);
 
   return (
     <Router>
       <Routes>
-        {/* PASO CLAVE: Pasamos la función a la LandingPage */}
         <Route path="/" element={<LandingPage onStartBooking={handleOpenModal} />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        
+        {/* 2. LA NUEVA RUTA DEL CATÁLOGO */}
+        <Route path="/servicios" element={<Servicios />} />
+
         <Route 
           path="/mis-citas" 
           element={
@@ -50,15 +56,14 @@ function App() {
         }/>
       </Routes>
 
-      
       {showModal && (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-        <BookingForm 
-          onBookingComplete={handleCloseModal} 
-          onClose={handleCloseModal} // <--- Pasamos la función aquí
-        />
-      </div>
-    )}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <BookingForm 
+            onBookingComplete={handleCloseModal} 
+            onClose={handleCloseModal} 
+          />
+        </div>
+      )}
     </Router>
   );
 }
