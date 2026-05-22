@@ -5,7 +5,9 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.pripelu.backend.entities.Empleado;
 import com.pripelu.backend.entities.Horario;
+import com.pripelu.backend.repositories.EmpleadoRepository;
 import com.pripelu.backend.repositories.HorarioRepository;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,9 @@ public class HorarioServiceImpl implements HorarioServices {
 
     @Autowired
     private HorarioRepository horarioRepo;
+
+    @Autowired
+    private EmpleadoRepository empleadoRepo;
 
     @Override
     @Transactional(readOnly = true)
@@ -32,6 +37,13 @@ public class HorarioServiceImpl implements HorarioServices {
     @Override
     @Transactional
     public Horario crear(Horario horario) {
+        if (horario.getEmpleado() != null && horario.getEmpleado().getId() != null) {
+            Long empId = horario.getEmpleado().getId();
+            Empleado empReal = empleadoRepo.findById(empId)
+                    .orElseThrow(() -> new RuntimeException("Empleado no encontrado con ID: " + empId));
+            horario.setEmpleado(empReal);
+        }
+
         return horarioRepo.save(horario);
     }
 
@@ -45,6 +57,14 @@ public class HorarioServiceImpl implements HorarioServices {
         existente.setHoraInicioAlmuerzo(actualizado.getHoraInicioAlmuerzo());
         existente.setHoraFinAlmuerzo(actualizado.getHoraFinAlmuerzo());
         existente.setHoracierre(actualizado.getHoracierre());
+
+        // Enganchar Empleado real por si decidieran cambiar el horario de un empleado a otro
+        if (actualizado.getEmpleado() != null && actualizado.getEmpleado().getId() != null) {
+            Long empId = actualizado.getEmpleado().getId();
+            Empleado empReal = empleadoRepo.findById(empId)
+                    .orElseThrow(() -> new RuntimeException("Empleado no encontrado con ID: " + empId));
+            existente.setEmpleado(empReal);
+        }
 
         return horarioRepo.save(existente);
     }

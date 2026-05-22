@@ -20,22 +20,18 @@ public class PagoServiceImpl implements PagoServices {
     private PagoRepository pagoRepo;
 
     @Autowired
-    private CitaRepository citaRepo; // Necesario para validar la cita antes de pagar
+    private CitaRepository citaRepo;
 
     @Override
     @Transactional
     public Pago crear(Pago pago) {
-        // Se valida que la cita asociada exista en la DB
-        // Se usa el ID de la cita que viene dentro del objeto pago
         Long citaId = pago.getCita().getId();
         Cita cita = citaRepo.findById(citaId)
                 .orElseThrow(() -> new RuntimeException("No se puede registrar pago: La cita ID " + citaId + " no existe."));
         pago.setCita(cita);
 
-        // Se generar la fecha y hora del pago automáticamente
         pago.setFechaPago(LocalDateTime.now());
 
-        // Si el estado viene vacío, le ponemos uno por defecto
         if (pago.getEstadoPago() == null) {
             pago.setEstadoPago("COMPLETADO");
         }

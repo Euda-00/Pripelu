@@ -6,7 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.pripelu.backend.entities.InsumosUtilizados;
+import com.pripelu.backend.entities.Inventario;
+import com.pripelu.backend.entities.Servicio;
 import com.pripelu.backend.repositories.InsumosUtiRepository;
+import com.pripelu.backend.repositories.InventarioRepository;
+import com.pripelu.backend.repositories.ServicioRepository;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +20,29 @@ public class InsumosUtiServiceImpl implements InsumosUtiServices {
     @Autowired
     private InsumosUtiRepository insumosUtiRepo;
 
+    @Autowired
+    private ServicioRepository servicioRepo; // Necesario para validar el servicio antes de asignar insumos
+
+    @Autowired
+    private InventarioRepository inventarioRepo; // Necesario para validar el inventario antes de asignar insumos
+
     @Override
     @Transactional
     public InsumosUtilizados crear(InsumosUtilizados insumosUtilizados) {
+        if (insumosUtilizados.getInventario() != null && insumosUtilizados.getInventario().getId() != null) {
+            Long invId = insumosUtilizados.getInventario().getId();
+            Inventario invReal = inventarioRepo.findById(invId)
+                    .orElseThrow(() -> new RuntimeException("Inventario no encontrado con ID: " + invId));
+            insumosUtilizados.setInventario(invReal);
+        }
+
+        if (insumosUtilizados.getServicio() != null && insumosUtilizados.getServicio().getId() != null) {
+            Long serId = insumosUtilizados.getServicio().getId();
+            Servicio serReal = servicioRepo.findById(serId)
+                    .orElseThrow(() -> new RuntimeException("Servicio no encontrado con ID: " + serId));
+            insumosUtilizados.setServicio(serReal);
+        }
+
         return insumosUtiRepo.save(insumosUtilizados);
     }
 
@@ -41,8 +65,20 @@ public class InsumosUtiServiceImpl implements InsumosUtiServices {
         InsumosUtilizados existente = obtenerPorId(id);
 
         existente.setCantidad(actualizado.getCantidad());
-        existente.setInventario(actualizado.getInventario());
-        existente.setServicio(actualizado.getServicio());
+
+        if (actualizado.getInventario() != null && actualizado.getInventario().getId() != null) {
+            Long invId = actualizado.getInventario().getId();
+            Inventario invReal = inventarioRepo.findById(invId)
+                    .orElseThrow(() -> new RuntimeException("Inventario no encontrado con ID: " + invId));
+            existente.setInventario(invReal);
+        }
+
+        if (actualizado.getServicio() != null && actualizado.getServicio().getId() != null) {
+            Long serId = actualizado.getServicio().getId();
+            Servicio serReal = servicioRepo.findById(serId)
+                    .orElseThrow(() -> new RuntimeException("Servicio no encontrado con ID: " + serId));
+            existente.setServicio(serReal);
+        }
 
         return insumosUtiRepo.save(existente);
     }
