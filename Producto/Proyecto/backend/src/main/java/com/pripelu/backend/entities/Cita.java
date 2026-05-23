@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -41,7 +40,7 @@ public class Cita {
     private Empleado empleado;
 
     @OneToMany(mappedBy = "cita", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonIgnoreProperties("citas")
     private List<CitaDetalles> detalles = new ArrayList<>();
 
     @Column(name = "Fecha_hora", nullable = false)

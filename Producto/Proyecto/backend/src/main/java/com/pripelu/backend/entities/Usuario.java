@@ -3,7 +3,7 @@ package com.pripelu.backend.entities;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -41,7 +41,7 @@ public class Usuario {
     private String rol;
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonIgnoreProperties("usuario")
     private List<Cita> citas = new ArrayList<>();
     
     @Column(name = "Telefono", length = 15, nullable = false)
