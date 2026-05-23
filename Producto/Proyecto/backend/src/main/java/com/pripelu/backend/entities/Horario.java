@@ -2,7 +2,7 @@ package com.pripelu.backend.entities;
 
 import java.time.LocalTime;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,7 +26,7 @@ public class Horario {
 
     @ManyToOne
     @JoinColumn(name = "Id_empleado", nullable = false)
-    @JsonBackReference
+    @JsonIgnoreProperties("horarios")
     private Empleado empleado;
 
     @Column(name = "Dia_semana", nullable = false)
