@@ -23,42 +23,30 @@ export default function TodasLasCitas() {
     fetchCitas();
   }, []);
 
-  // --- NUEVA FUNCIÓN: ACTUALIZAR ESTADO EN EL BACKEND (VERSIÓN LIMPIA) ---
+  // --- FUNCIÓN ACTUALIZADA: MANDAMOS EL OBJETO COMPLETO ---
   const actualizarEstado = async (id, nuevoEstado) => {
-    // 1. Buscamos la cita original
+    // 1. Buscamos la cita original gigante con todos sus datos
     const citaActual = citas.find(c => c.id === id);
     if (!citaActual) return;
 
-    // 2. ARMAMOS UN PAQUETE LIMPIO (La Dieta del JSON)
-    // Solo mandamos lo esencial y los IDs para que Java no se maree con objetos gigantes
-    const citaLimpia = {
-      id: citaActual.id,
-      fechaHora: citaActual.fechaHora,
-      estado: nuevoEstado, 
-      notas: citaActual.notas,
-      valorTotal: citaActual.valorTotal,
-      duracionTotal: citaActual.duracionTotal,
-      usuario: { id: citaActual.usuario?.id || citaActual.usuario?.id_usuario },
-      empleado: { id: citaActual.empleado?.id || citaActual.empleado?.id_empleado },
-      detalles: citaActual.detalles?.map(d => ({
-        id: d.id,
-        precioCita: d.precioCita,
-        servicio: { id: d.servicio?.id || d.servicio?.id_servicio }
-      }))
+    // 2. Clonamos la cita exacta y solo le pisamos el estado (El "Fat JSON")
+    const citaActualizada = { 
+        ...citaActual, 
+        estado: nuevoEstado 
     };
 
     try {
       const respuesta = await fetch(`http://localhost:8080/api/citas/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(citaLimpia)
+        body: JSON.stringify(citaActualizada)
       });
 
       if (respuesta.ok) {
         // Actualizamos la pantalla al instante si Java dice "OK"
         setCitas(citas.map(c => c.id === id ? { ...c, estado: nuevoEstado } : c));
       } else {
-        alert("Java rechazó el paquete. Revisa la consola de Spring Boot.");
+        alert("Java rechazó la actualización. Revisa la consola de Spring Boot.");
       }
     } catch (error) {
       console.error("Falla de red al actualizar:", error);
@@ -135,7 +123,6 @@ export default function TodasLasCitas() {
                   </div>
                 </div>
 
-                {/* --- SECCIÓN DE BOTONES (Solo se muestran si está Pendiente) --- */}
                 {cita.estado?.toLowerCase() === 'pendiente' && (
                   <div className="flex border-t border-gray-100">
                     <button 

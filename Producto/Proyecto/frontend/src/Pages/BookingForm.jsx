@@ -124,36 +124,33 @@ export default function BookingForm({ onBookingComplete, onClose }) {
       return alert("Por favor, completa todos los campos obligatorios ✨");
     }
 
-    const userId = localStorage.getItem('userId') || 2;
+    // Aseguramos que el ID sea un número válido, si falla ponemos 1 por defecto
+    const userId = localStorage.getItem('userId');
+    const idUsuarioLimpio = userId ? parseInt(userId) : 1; 
+
     const servicioSeleccionado = servicios.find(s => parseInt(s.id) === parseInt(formData.servicioId) || parseInt(s.id_servicio) === parseInt(formData.servicioId));
     const precioFinal = servicioSeleccionado ? servicioSeleccionado.precio : 0;
     const duracionFinal = servicioSeleccionado ? (servicioSeleccionado.duracion_min || 45) : 45;
 
     const fechaHoraFormateada = `${formData.fecha}T${formData.hora}:00`;
 
-    // PAQUETE MAESTRO CON DOBLE ID PARA PREVENIR ERRORES DE LECTURA EN JAVA
+    // PAQUETE LIMPIO SOLO CON LA PROPIEDAD "id" ESTÁNDAR
     const nuevaReserva = {
       fechaHora: fechaHoraFormateada,
       estado: "Pendiente",
-      notas: formData.notas,
+      notas: formData.notas || "Sin notas",
       valorTotal: precioFinal,
       duracionTotal: duracionFinal,
-      usuario: { 
-        id: parseInt(userId),
-        id_usuario: parseInt(userId)
-      }, 
-      empleado: { 
-        id: parseInt(formData.empleadoId),
-        id_empleado: parseInt(formData.empleadoId)
-      }, 
+      usuario: { id: idUsuarioLimpio }, 
+      empleado: { id: parseInt(formData.empleadoId) }, 
       detalles: [{
           precioCita: precioFinal,
-          servicio: { 
-            id: parseInt(formData.servicioId),
-            id_servicio: parseInt(formData.servicioId)
-          }
+          servicio: { id: parseInt(formData.servicioId) }
       }]
     };
+
+    // EL CHISMOSO PARA LA CONSOLA
+    console.log("📦 PAQUETE QUE SE VA A JAVA:", JSON.stringify(nuevaReserva, null, 2));
 
     try {
       const respuesta = await fetch('http://localhost:8080/api/citas', {
@@ -166,7 +163,7 @@ export default function BookingForm({ onBookingComplete, onClose }) {
         alert("✅ ¡Cita agendada con éxito! Ya puedes verla en el panel.");
         onBookingComplete(formData);
       } else {
-        console.error("El servidor rechazó la reserva");
+        console.error("El servidor rechazó la reserva con status:", respuesta.status);
         alert("Hubo un problema al guardar la reserva en la base de datos.");
       }
     } catch (error) {
