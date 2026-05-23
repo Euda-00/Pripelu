@@ -2,7 +2,7 @@ package com.pripelu.backend.entities;
 
 import java.math.BigDecimal;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,11 +25,12 @@ public class InsumosUtilizados {
 
     @ManyToOne
     @JoinColumn(name = "id_insumo", nullable = false)
+    @JsonIgnoreProperties("insumosUtilizados")
     private Inventario inventario;
 
     @ManyToOne
     @JoinColumn(name = "id_servicio", nullable = false)
-    @JsonBackReference
+    @JsonIgnoreProperties("insumosUtilizados")
     private Servicio servicio;
 
     @Column(name = "cantidad", precision = 10, scale = 2, nullable = false)
