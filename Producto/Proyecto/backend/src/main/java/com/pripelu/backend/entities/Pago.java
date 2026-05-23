@@ -2,6 +2,8 @@ package com.pripelu.backend.entities;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -24,6 +26,7 @@ public class Pago {
 
     @OneToOne
     @JoinColumn(name = "id_cita", nullable = false)
+    @JsonIgnoreProperties("pago")
     private Cita cita;
 
     @Column(name = "monto", nullable = false)
