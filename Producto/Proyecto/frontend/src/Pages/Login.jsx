@@ -24,9 +24,11 @@ export default function Login() {
 
       if (respuesta.ok) {
         const usuarioLogeado = await respuesta.json();
+        // Guardamos los datos en la memoria del navegador
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('userRole', usuarioLogeado.rol?.toLowerCase() || 'cliente');
         localStorage.setItem('userName', usuarioLogeado.nombre || 'Usuario');
+        localStorage.setItem('userId', usuarioLogeado.id_usuario || usuarioLogeado.id);
 
         if (usuarioLogeado.rol?.toLowerCase() === 'admin') {
           navigate('/admin');
