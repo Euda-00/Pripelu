@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react'; // <-- IMPORTANTE: Agregar useEffect
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Play, MapPin, Phone, Clock, User, LogOut, Settings, Calendar, ClipboardList } from 'lucide-react';
-// IMPORTANTE: Ya no necesitamos importar 'serviciosData' desde '../data'
-import { equipoData, floresData } from '../data'; 
+import { Play, MapPin, Phone, Clock, User, LogOut, Settings, Calendar, ClipboardList, Scissors } from 'lucide-react';
+import { floresData } from '../data'; 
 import { TarjetaEquipo } from '../components/TarjetasEquipo';
 import { FloatingFlower } from '../components/Flores';
 import { Comparador } from '../components/Comparador';
@@ -13,32 +12,38 @@ export default function LandingPage({ onStartBooking }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
 
-  // --- NUEVO ESTADO PARA LOS SERVICIOS DE MYSQL ---
+  // --- ESTADOS PARA DATOS DE MYSQL ---
   const [servicios, setServicios] = useState([]);
-  const [cargandoServicios, setCargandoServicios] = useState(true);
+  const [empleados, setEmpleados] = useState([]); // Nuevo estado para el staff
+  const [cargando, setCargando] = useState(true);
 
   const isAuth = localStorage.getItem('isAuthenticated') === 'true';
   const userRole = localStorage.getItem('userRole'); 
 
-  // --- NUEVO: LLAMADA AL BACKEND AL CARGAR LA PÁGINA ---
+  // --- CARGA DE DATOS AL INICIAR ---
   useEffect(() => {
-    const obtenerServicios = async () => {
+    const cargarDatos = async () => {
       try {
-        const respuesta = await fetch('http://localhost:8080/api/servicios');
-        if (respuesta.ok) {
-          const datos = await respuesta.json();
-          setServicios(datos);
-        } else {
-          console.error('Error al traer los servicios del backend');
+        // Traer Servicios
+        const resServ = await fetch('http://localhost:8080/api/servicios');
+        if (resServ.ok) setServicios(await resServ.servicios || await resServ.json());
+
+        // Traer Empleados
+        const resEmp = await fetch('http://localhost:8080/api/empleado'); // Ojo que el endpoint es empleado a secas no plural no que ajili 
+        if (resEmp.ok) {
+          const dataEmp = await resEmp.json();
+          // Le decimos a React: "Si es una lista real, guárdala. Si no, guarda una lista vacía para no explotar"
+          setEmpleados(Array.isArray(dataEmp) ? dataEmp : []);
         }
+        
       } catch (error) {
-        console.error('Falla en la conexión con el servidor:', error);
+        console.error('Error conectando con el backend:', error);
       } finally {
-        setCargandoServicios(false);
+        setCargando(false);
       }
     };
 
-    obtenerServicios();
+    cargarDatos();
   }, []);
 
   const handleLogout = () => {
@@ -56,9 +61,8 @@ export default function LandingPage({ onStartBooking }) {
         <FloatingFlower key={f.id} {...f} />
       ))}
 
-      {/* NAVEGACIÓN (Se mantiene intacta) */}
+      {/* NAVEGACIÓN */}
       <nav className="relative z-[100] flex justify-between items-center px-8 md:px-12 py-6 bg-white/30 backdrop-blur-md sticky top-0 border-b border-pink-100">
-        {/* ... (Tu código de navegación original) ... */}
          <div className="flex items-center gap-3">
           <div className="bg-white p-2 rounded-full shadow-sm">
             <img src="/logo-pripelu.png" alt="Logo" className="w-8" />
@@ -111,10 +115,7 @@ export default function LandingPage({ onStartBooking }) {
                     </Link>
                   )}
 
-                  <button 
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-5 py-4 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-gray-50"
-                  >
+                  <button onClick={handleLogout} className="w-full flex items-center gap-3 px-5 py-4 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-gray-50">
                     <LogOut size={16} /> Cerrar Sesión
                   </button>
                 </div>
@@ -128,30 +129,20 @@ export default function LandingPage({ onStartBooking }) {
         </div>
       </nav>
 
-      {/* HERO SECTION (Se mantiene intacta) */}
+      {/* HERO SECTION */}
       <header className="relative z-10 flex flex-col items-center justify-center min-h-[90vh] text-center px-4 pt-10">
-        {/* ... (Tu código del Hero original) ... */}
-         <motion.div 
-          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-pink-100/60 backdrop-blur-sm text-[#f171ab] px-5 py-1 rounded-full text-xs font-bold mb-8 flex items-center gap-2"
-        >
+         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-pink-100/60 backdrop-blur-sm text-[#f171ab] px-5 py-1 rounded-full text-xs font-bold mb-8 flex items-center gap-2">
           ✨ Experiencia Premium en Belleza
         </motion.div>
 
-        <motion.img
-          initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-          src="/logo-pripelu-gold.png" alt="PriPelu Gold"
-          className="w-[280px] md:w-[500px] drop-shadow-2xl mb-10"
-        />
+        <motion.img initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} src="/logo-pripelu-gold.png" alt="PriPelu Gold" className="w-[280px] md:w-[500px] drop-shadow-2xl mb-10" />
 
         <p className="max-w-2xl text-gray-600 text-lg md:text-xl font-medium mb-12">
           Donde tu estilo cobra vida. Transformamos tu imagen con técnicas innovadoras y productos de alta gama.
         </p>
 
         <div className="flex flex-col md:flex-row gap-5 mb-16">
-          <button onClick={onStartBooking} className="btn-primary">
-            Reserva tu Transformación
-          </button>
+          <button onClick={onStartBooking} className="btn-primary">Reserva tu Transformación</button>
           <button className="btn-secondary">
             <div className="bg-[#f171ab] p-1 rounded-full text-white"><Play size={16} fill="white" /></div>
             Ver Video
@@ -165,29 +156,27 @@ export default function LandingPage({ onStartBooking }) {
         </div>
       </header>
 
-      {/* --- SECCIÓN SERVICIOS ACTUALIZADA --- */}
+      {/* --- SECCIÓN SERVICIOS (6 Servicios) --- */}
       <section id="servicios" className="section-container bg-white rounded-t-[4rem] shadow-2xl">
         <div className="section-title-wrapper">
           <p className="section-subtitle">Nuestros Servicios</p>
           <h2 className="section-title">Experiencias Únicas</h2>
         </div>
         
-        {cargandoServicios ? (
+        {cargando ? (
            <p className="text-center text-[#f171ab] font-bold text-xl py-10">Cargando catálogo...</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-7xl mx-auto">
-            {/* AQUÍ MAPEA LOS SERVICIOS DE MYSQL EN TUS TARJETAS ORIGINALES */}
             {servicios.map((s) => (
-              <motion.div key={s.id_servicio || s.id} whileHover={{ y: -10 }} className="card-pripelu group">
+              <motion.div key={s.id || s.id_servicio} whileHover={{ y: -10 }} className="card-pripelu group">
                 <div className="w-16 h-16 bg-pink-50 rounded-2xl flex items-center justify-center text-[#f171ab] mb-6 group-hover:bg-[#f171ab] group-hover:text-white transition-all">
-                  {/* Como el ícono no viene de la BD, le ponemos uno por defecto para que no rompa */}
-                  <Settings size={28} /> 
+                  <Scissors size={28} /> 
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-3">{s.nombre}</h3>
                 <p className="text-gray-500 text-sm italic mb-8 h-10 overflow-hidden">{s.descripcion}</p>
                 <div className="flex justify-between items-center border-t border-pink-50 pt-8">
-                  <span className="text-[#f171ab] font-bold text-xl italic">${s.precio}</span>
-                  <span className="text-xs text-gray-400 font-bold">{s.duracion_min || s.duracion} min</span>
+                  <span className="text-[#f171ab] font-bold text-xl italic">${s.precio?.toLocaleString()}</span>
+                  <span className="text-xs text-gray-400 font-bold">{s.duracion_min || s.duracionMinutos} min</span>
                 </div>
               </motion.div>
             ))}
@@ -195,23 +184,27 @@ export default function LandingPage({ onStartBooking }) {
         )}
       </section>
 
-      {/* SECCIÓN EQUIPO (Se mantiene intacta) */}
+      {/* --- SECCIÓN EQUIPO (Empleados Reales de MySQL) --- */}
       <section id="equipo" className="section-container bg-[#fdf2f8]">
-        {/* ... (Tu código de Equipo original) ... */}
         <div className="section-title-wrapper">
           <p className="section-subtitle">Profesionales</p>
           <h2 className="section-title text-[#f171ab]">Artistas del Cabello</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-7xl mx-auto">
-          {equipoData.map((persona) => (
-            <TarjetaEquipo key={persona.id} persona={persona} />
-          ))}
+          {cargando ? (
+            <p className="col-span-3 text-center text-[#f171ab] font-bold">Buscando a nuestros talentos...</p>
+          ) : Array.isArray(empleados) && empleados.length > 0 ? (
+            empleados.map((persona) => (
+              <TarjetaEquipo key={persona.id || persona.id_empleado} persona={persona} />
+            ))
+          ) : (
+            <p className="col-span-3 text-center text-gray-400">Próximamente conocerás a nuestro staff...</p>
+          )}
         </div>
       </section>
 
-      {/* GALERÍA (Se mantiene intacta) */}
+      {/* GALERÍA */}
       <section id="galería" className="section-container bg-white">
-        {/* ... (Tu código de Galería original) ... */}
          <div className="section-title-wrapper">
           <p className="section-subtitle">Resultados Reales</p>
           <h2 className="section-title">Transformaciones Mágicas</h2>
@@ -219,21 +212,18 @@ export default function LandingPage({ onStartBooking }) {
         <Comparador antes="/tu-foto-antes.jpg" despues="/tu-foto-despues.jpg" />
       </section>
 
-      {/* CONTACTO (Se mantiene intacta) */}
+      {/* CONTACTO */}
       <section className="section-container bg-[#fdf2f8]">
-        {/* ... (Tu código de Contacto original) ... */}
          <div className="max-w-4xl mx-auto bg-white rounded-[3rem] shadow-xl overflow-hidden border border-pink-100 flex flex-col md:flex-row">
           <div className="p-12 md:w-1/2">
             <p className="section-subtitle">Encuéntranos</p>
             <h2 className="text-3xl font-bold text-gray-800 mb-8 italic">Visítanos en Maipú</h2>
-            
             <div className="space-y-6">
               <ContactInfo icon={<MapPin size={20}/>} title="Dirección" content="Maipú, Santiago." />
               <ContactInfo icon={<Phone size={20}/>} title="WhatsApp" content="+56 9 1234 5678" />
               <ContactInfo icon={<Clock size={20}/>} title="Horario" content="Mar - Sáb: 10:00 - 19:00 hrs" />
             </div>
           </div>
-
           <div className="bg-[#f171ab] p-12 md:w-1/2 flex flex-col items-center justify-center text-center text-white">
             <h3 className="text-2xl font-bold mb-4 italic">¿Lista para un cambio?</h3>
             <button onClick={onStartBooking} className="bg-white text-[#f171ab] px-10 py-4 rounded-full font-bold shadow-lg hover:bg-pink-50 transition-all">
@@ -243,7 +233,6 @@ export default function LandingPage({ onStartBooking }) {
         </div>
       </section>
 
-      {/* FOOTER (Se mantiene intacta) */}
       <footer className="bg-white py-12 text-center text-gray-400 text-xs border-t border-pink-50">
         <p>© 2026 PriPelu Studio. Maipú, Santiago. Diseñado con ✨</p>
       </footer>
