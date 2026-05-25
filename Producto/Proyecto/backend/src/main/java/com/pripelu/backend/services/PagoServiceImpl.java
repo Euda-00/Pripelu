@@ -31,9 +31,21 @@ public class PagoServiceImpl implements PagoServices {
         pago.setCita(cita);
 
         pago.setFechaPago(LocalDateTime.now());
-
         if (pago.getEstadoPago() == null) {
             pago.setEstadoPago("COMPLETADO");
+        }
+
+        if (pago.getTipoPago() != null) {
+            String tipo = pago.getTipoPago().toUpperCase();
+            
+            if (tipo.equals("ABONO")) {
+                cita.setEstado("CONFIRMADA");
+            } else if (tipo.equals("TOTAL")) {
+                cita.setEstado("PAGADA");
+            }
+            
+        } else {
+            throw new RuntimeException("El tipo de pago (ABONO o TOTAL) es obligatorio.");
         }
 
         return pagoRepo.save(pago);

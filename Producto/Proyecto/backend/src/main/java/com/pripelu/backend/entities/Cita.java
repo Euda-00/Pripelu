@@ -43,6 +43,10 @@ public class Cita {
     @JsonIgnoreProperties("citas")
     private List<CitaDetalles> detalles = new ArrayList<>();
 
+    @OneToMany(mappedBy = "cita", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("cita")
+    private List<Pago> pagos = new ArrayList<>();
+
     @Column(name = "Fecha_hora", nullable = false)
     private LocalDateTime fechaHora;
 
