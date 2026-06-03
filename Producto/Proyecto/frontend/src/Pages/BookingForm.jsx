@@ -126,7 +126,34 @@ export default function BookingForm({ onBookingComplete, onClose }) {
 
   const handlePagoChange = (e) => {
     const { name, value } = e.target;
-    setDatosPago({ ...datosPago, [name]: value });
+    let valorFormateado = value;
+
+    if (name === 'numero') {
+      // 1. Borramos cualquier cosa que no sea número
+      const soloNumeros = value.replace(/\D/g, '');
+      // 2. Limitamos a un máximo de 16 números
+      const limite16 = soloNumeros.substring(0, 16);
+      // 3. Agregamos un espacio cada 4 números
+      valorFormateado = limite16.replace(/(\d{4})(?=\d)/g, '$1 ');
+      
+    } else if (name === 'vencimiento') {
+      // 1. Borramos letras y dejamos solo números
+      const soloNumeros = value.replace(/\D/g, '');
+      // 2. Limitamos a 4 números máximo (MMYY)
+      const limite4 = soloNumeros.substring(0, 4);
+      // 3. Insertamos el slash "/" automáticamente después del mes
+      if (limite4.length >= 3) {
+        valorFormateado = `${limite4.substring(0, 2)}/${limite4.substring(2, 4)}`;
+      } else {
+        valorFormateado = limite4;
+      }
+      
+    } else if (name === 'cvv') {
+      // Limitamos a exactamente 3 números
+      valorFormateado = value.replace(/\D/g, '').substring(0, 3);
+    }
+
+    setDatosPago({ ...datosPago, [name]: valorFormateado });
   };
 
   // 3. CÁLCULOS MATEMÁTICOS PARA EL PAGO
@@ -145,12 +172,53 @@ export default function BookingForm({ onBookingComplete, onClose }) {
     }
     setPaso(2);
   };
+  
 
   // --- PASO 2 al 3: EJECUTAR RESERVA Y PAGO AL BACKEND ---
   const handleEjecutarPago = async (e) => {
     e.preventDefault();
-    setProcesandoPago(true);
-    setErrorBackend('');
+    // ¡OJO AQUÍ! Solo limpiamos el error, NO ponemos a cargar todavía
+    setErrorBackend(''); 
+
+    // ==========================================
+    // 🛡️ 1. VALIDACIONES DE TARJETA
+    // ==========================================
+    
+    // Validar Número (16 dígitos)
+    const numeroLimpio = datosPago.numero.replace(/\s/g, ''); 
+    if (numeroLimpio.length !== 16 || isNaN(numeroLimpio)) {
+      setErrorBackend('El número de tarjeta debe tener exactamente 16 dígitos numéricos.');
+      return; 
+    }
+
+    // Validar CVV (exactamente 3 dígitos)
+    if (datosPago.cvv.length !== 3 || isNaN(datosPago.cvv)) {
+      setErrorBackend('El código CVV debe tener exactamente 3 dígitos.');
+      return;
+    }
+
+    // Validar Vencimiento (Formato MM/YY y que no esté vencida)
+    const [mes, anio] = datosPago.vencimiento.split('/');
+    if (!mes || !anio || mes < 1 || mes > 12 || anio.length !== 2) {
+      setErrorBackend('Usa un formato válido para el vencimiento (MM/YY). Ej: 12/28');
+      return;
+    }
+
+    const fechaActual = new Date();
+    const mesActual = fechaActual.getMonth() + 1; 
+    const anioActual = parseInt(fechaActual.getFullYear().toString().slice(-2)); 
+    const mesVencimiento = parseInt(mes);
+    const anioVencimiento = parseInt(anio);
+
+    if (anioVencimiento < anioActual || (anioVencimiento === anioActual && mesVencimiento < mesActual)) {
+      setErrorBackend('La tarjeta ingresada se encuentra vencida. Usa otra tarjeta.');
+      return;
+    }
+
+    // ==========================================
+    // 🚀 2. TARJETA VÁLIDA: AHORA SÍ INICIAMOS EL PAGO
+    // ==========================================
+    setProcesandoPago(true); // <--- LO MOVIMOS AQUÍ
 
     const userId = localStorage.getItem('userId') || 2;
     const idUsuarioLimpio = parseInt(userId); 
@@ -172,6 +240,7 @@ export default function BookingForm({ onBookingComplete, onClose }) {
     };
 
     try {
+      await new Promise(resolve => setTimeout(resolve, 3000));
       // 2. Primero guardamos la CITA
       const respuestaCita = await fetch('http://localhost:8080/api/citas', {
         method: 'POST',
@@ -186,7 +255,7 @@ export default function BookingForm({ onBookingComplete, onClose }) {
       const idDeLaCitaNueva = citaCreada.id || citaCreada.id_cita;
       
 
-      // 4. Creamos el objeto PAGO en base a la clase del Eugenio
+      // 4. Creamos el objeto PAGO en base a la clase 
       const nuevoPago = {
         cita: { id: idDeLaCitaNueva }, // Aquí hacemos la relación @ManyToOne
         monto: montoAbono,             // Guardamos los $2.000 del abono
@@ -295,25 +364,32 @@ export default function BookingForm({ onBookingComplete, onClose }) {
       {/* --- PASO 2: MODAL DE PAGO (TARJETA) --- */}
       {paso === 2 && (
         <div className="animate-fade-in text-center flex flex-col h-full justify-center">
-          <button onClick={() => setPaso(1)} disabled={procesandoPago} className="absolute top-6 left-6 text-pink-400 font-bold hover:text-pink-600 disabled:opacity-50">← Volver</button>
+          <button onClick={() => {
+                  setPaso(1);
+                  setErrorBackend(''); // Limpiamos la basura al volver
+              }} 
+              disabled={procesandoPago} 
+              className="absolute top-6 left-6 text-pink-400 font-bold hover:text-pink-600 disabled:opacity-50 z-10">← Volver
+          </button>
           
           <h2 className="text-3xl font-serif text-[#b02a6b] italic mb-2">Pago Seguro</h2>
           <p className="text-gray-500 text-sm mb-6">Ingresa tus datos para confirmar tu abono de <b>${montoAbono}</b>.</p>
 
+          {/* Input de Pago */}
           <form onSubmit={handleEjecutarPago} className="space-y-4 max-w-sm mx-auto w-full text-left">
             <div className="flex flex-col gap-1">
               <label className="text-[#b02a6b] font-bold text-xs ml-2 uppercase">Número de Tarjeta</label>
-              <input type="text" name="numero" placeholder="XXXX XXXX XXXX XXXX" maxLength="16" onChange={handlePagoChange} required disabled={procesandoPago} className="input-pripelu tracking-widest text-center" />
+              <input type="text" name="numero" placeholder="XXXX XXXX XXXX XXXX" maxLength="19" value={datosPago.numero} onChange={handlePagoChange} required disabled={procesandoPago} className="input-pripelu tracking-widest text-center" />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
                 <label className="text-[#b02a6b] font-bold text-xs ml-2 uppercase">Vencimiento</label>
-                <input type="text" name="vencimiento" placeholder="MM/YY" maxLength="5" onChange={handlePagoChange} required disabled={procesandoPago} className="input-pripelu text-center" />
+                <input type="text" name="vencimiento" placeholder="MM/YY" maxLength="5" value={datosPago.vencimiento} onChange={handlePagoChange} required disabled={procesandoPago} className="input-pripelu text-center" />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-[#b02a6b] font-bold text-xs ml-2 uppercase">CVV</label>
-                <input type="password" name="cvv" placeholder="***" maxLength="4" onChange={handlePagoChange} required disabled={procesandoPago} className="input-pripelu text-center" />
+                <input type="password" name="cvv" placeholder="***" maxLength="3" value={datosPago.cvv} onChange={handlePagoChange} required disabled={procesandoPago} className="input-pripelu text-center" />
               </div>
             </div>
 
@@ -338,6 +414,7 @@ export default function BookingForm({ onBookingComplete, onClose }) {
             Se te cobrará el resto (${saldoPendiente}) al completar la cita en el local.
           </div>
           <p className="text-pink-400 text-xs animate-pulse mt-4">Redirigiendo a tu agenda...</p>
+          
         </div>
       )}
 

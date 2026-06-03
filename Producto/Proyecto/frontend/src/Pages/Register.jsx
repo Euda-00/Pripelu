@@ -7,16 +7,55 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [telefono, setTelefono] = useState('');
+  const [errorMensaje, setErrorMensaje] = useState(''); // <-- Nuevo estado para mostrar errores bonitos
+  
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    setErrorMensaje(''); // Limpiamos errores anteriores al volver a intentar
 
-    if (!nombre || !apellido || !email || !password || !telefono) {
-      alert('Por favor, rellena todos los campos');
+    // ==========================================
+    // 🛡️ VALIDACIONES DE DATOS
+    // ==========================================
+
+    // 1. Campos vacíos
+    if (!nombre.trim() || !apellido.trim() || !email.trim() || !password.trim() || !telefono.trim()) {
+      setErrorMensaje('Por favor, rellena todos los campos obligatorios.');
       return;
     }
 
+    // 2. Nombre y Apellido (solo letras y espacios)
+    const letrasRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+    if (!letrasRegex.test(nombre) || !letrasRegex.test(apellido)) {
+      setErrorMensaje('El nombre y apellido solo deben contener letras.');
+      return;
+    }
+
+    // 3. Email (debe tener @ y un dominio)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setErrorMensaje('Ingresa un correo electrónico válido (ejemplo: tu@email.com).');
+      return;
+    }
+
+    // 4. Teléfono (Formato chileno: 9 dígitos o con +569)
+    const telefonoLimpio = telefono.replace(/\s/g, ''); // Quitamos espacios si los puso
+    const telRegex = /^(\+?56)?9\d{8}$/;
+    if (!telRegex.test(telefonoLimpio)) {
+      setErrorMensaje('Ingresa un celular válido (ej: +56912345678 o 912345678).');
+      return;
+    }
+
+    // 5. Contraseña (mínimo 6 caracteres)
+    if (password.length < 6) {
+      setErrorMensaje('La contraseña debe tener al menos 6 caracteres por seguridad.');
+      return;
+    }
+
+    // ==========================================
+    // 🚀 ENVÍO AL BACKEND
+    // ==========================================
     try {
       const respuesta = await fetch('http://localhost:8080/api/usuarios', {
         method: 'POST',
@@ -24,11 +63,11 @@ export default function Register() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          nombre: nombre,
-          apellido: apellido,
-          email: email,
+          nombre: nombre.trim(),
+          apellido: apellido.trim(),
+          email: email.trim(),
           contrasena: password, 
-          telefono: telefono,
+          telefono: telefonoLimpio,
           rol: 'cliente' 
         }),
       });
@@ -38,11 +77,11 @@ export default function Register() {
         navigate('/login'); 
       } else {
         const errorData = await respuesta.json().catch(() => ({}));
-        alert(`Error al registrar: ${errorData.message || 'Revisa los datos o si el correo ya existe'}`);
+        setErrorMensaje(errorData.message || 'El correo ya está registrado o hubo un error.');
       }
     } catch (error) {
       console.error('Error en el registro:', error);
-      alert('Hubo un problema de red al conectar con el servidor.');
+      setErrorMensaje('Hubo un problema de red al conectar con el servidor.');
     }
   };
 
@@ -110,6 +149,13 @@ export default function Register() {
               placeholder="••••••••"
             />
           </div>
+
+          {/* MENSAJE DE ERROR EN PANTALLA */}
+          {errorMensaje && (
+            <p className="text-red-500 text-xs text-center font-bold px-2">
+              {errorMensaje}
+            </p>
+          )}
 
           <button 
             type="submit"
